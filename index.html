@@ -2,634 +2,388 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#0a0a0a">
-  <title>Lecture Typer</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='15' fill='%230a0a0a'/%3E%3Crect x='5' y='5' width='90' height='90' rx='12' fill='none' stroke='%2300ff88' stroke-width='2'/%3E%3Cpath d='M30 70 L30 40 Q30 30 40 30 L60 30 Q70 30 70 40 L70 70' fill='none' stroke='%2300ff88' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='55' r='8' fill='%2300ff88'/%3E%3Crect x='25' y='75' width='50' height='6' rx='3' fill='%2300ff88'/%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='15' fill='%230a0a0a'/%3E%3Crect x='5' y='5' width='90' height='90' rx='12' fill='none' stroke='%2300ff88' stroke-width='2'/%3E%3Cpath d='M30 70 L30 40 Q30 30 40 30 L60 30 Q70 30 70 40 L70 70' fill='none' stroke='%2300ff88' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='55' r='8' fill='%2300ff88'/%3E%3Crect x='25' y='75' width='50' height='6' rx='3' fill='%2300ff88'/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIP-BOY LECTURE TYPER 2.1</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2300ff88'/></svg>">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
     
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
     :root {
       --green: #00ff88;
-      --green-dim: #00aa5c;
-      --green-glow: rgba(0, 255, 136, 0.3);
+      --green-dim: #004422;
+      --green-glow: rgba(0, 255, 136, 0.4);
       --red: #ff3333;
-      --red-dim: #aa2222;
-      --bg: #0a0a0a;
-      --bg-card: #111111;
-      --bg-card-border: #1a1a1a;
-      --text-dim: #446655;
+      --bg: #111;
     }
+    
+    * { box-sizing: border-box; }
     
     body {
+      background-color: var(--bg);
+      color: var(--green);
       font-family: 'Share Tech Mono', monospace;
-      background: var(--bg);
-      color: var(--green);
-      min-height: 100vh;
-      padding: 1rem;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    
-    .container {
-      max-width: 900px;
+
+    /* CRT Scanline Overlay */
+    body::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 2;
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+    }
+
+    .pip-boy-frame {
+      padding: 20px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      max-width: 1000px;
       margin: 0 auto;
+      width: 100%;
+      z-index: 1;
     }
-    
-    .header {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--green-dim);
-    }
-    
-    .header h1 {
-      font-size: 1.5rem;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      text-shadow: 0 0 10px var(--green-glow);
-      margin-bottom: 0.25rem;
-    }
-    
-    .header p {
-      font-size: 0.8rem;
-      color: var(--green-dim);
-    }
-    
-    .error {
-      background: rgba(255, 51, 51, 0.1);
-      border: 1px solid var(--red);
-      color: var(--red);
-      padding: 0.75rem 1rem;
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
-    }
-    
-    .controls {
+
+    header {
+      border-bottom: 2px solid var(--green);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
       display: flex;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      text-shadow: 0 0 10px var(--green-glow);
     }
-    
-    .btn {
-      font-family: inherit;
-      font-size: 0.9rem;
-      padding: 0.6rem 1.5rem;
+
+    h1 { margin: 0; font-size: 24px; letter-spacing: 2px; }
+    .status { font-size: 14px; opacity: 0.8; }
+
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      background: var(--green-dim);
+      padding: 10px;
+      border: 1px solid var(--green);
+    }
+
+    .stat { flex: 1; text-align: center; }
+    .stat-val { font-size: 24px; font-weight: bold; }
+    .stat-label { font-size: 12px; opacity: 0.7; }
+
+    /* TYPING AREA */
+    .typing-container {
+      flex: 1;
+      position: relative;
+      background: #000;
       border: 2px solid var(--green);
-      background: transparent;
-      color: var(--green);
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      transition: all 0.2s;
-    }
-    
-    .btn:hover {
-      background: var(--green);
-      color: var(--bg);
-      box-shadow: 0 0 20px var(--green-glow);
-    }
-    
-    .btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    
-    .btn.active {
-      background: var(--red);
-      border-color: var(--red);
-      color: white;
-    }
-    
-    .btn.active:hover {
-      background: var(--red-dim);
-      box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
-    }
-    
-    .confidence-control {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      color: var(--green-dim);
-    }
-    
-    .confidence-control input {
-      width: 80px;
-      background: var(--bg-card);
-      border: 1px solid var(--bg-card-border);
-      color: var(--green);
-      padding: 0.4rem;
-      font-family: inherit;
-      font-size: 0.8rem;
-    }
-    
-    .confidence-control input:focus {
-      outline: none;
-      border-color: var(--green-dim);
-    }
-    
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    @media (max-width: 600px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--bg-card-border);
-      padding: 0.75rem 1rem;
-    }
-    
-    .stat-label {
-      font-size: 0.65rem;
-      color: var(--green-dim);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 0.25rem;
-    }
-    
-    .stat-value {
-      font-size: 1.75rem;
-      text-shadow: 0 0 10px var(--green-glow);
-    }
-    
-    .stat-value.live {
-      color: var(--green);
-      animation: pulse 1.5s infinite;
-    }
-    
-    .stat-value.off {
-      color: var(--text-dim);
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-    
-    .panel {
-      background: var(--bg-card);
-      border: 1px solid var(--bg-card-border);
-      margin-bottom: 1rem;
-    }
-    
-    .panel-header {
-      padding: 0.6rem 1rem;
-      border-bottom: 1px solid var(--bg-card-border);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--green-dim);
-    }
-    
-    .panel-body {
-      padding: 1rem;
-      min-height: 120px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    
-    .transcript {
-      font-size: 1rem;
+      padding: 30px;
+      font-size: 24px;
       line-height: 1.6;
+      overflow-y: auto;
+      cursor: text;
+      box-shadow: inset 0 0 20px var(--green-glow);
+    }
+
+    .typing-content {
+      white-space: pre-wrap;
       word-break: break-word;
+      min-height: 100%;
+      padding-bottom: 50vh; /* Allows scrolling past end */
     }
+
+    .char { position: relative; }
+    .char.correct { color: var(--green); text-shadow: 0 0 5px var(--green); }
+    .char.incorrect { color: var(--red); text-decoration: underline; background: rgba(255,0,0,0.2); }
+    .char.pending { color: var(--green); opacity: 0.3; }
     
-    .char-correct {
-      color: var(--green);
-      text-shadow: 0 0 5px var(--green-glow);
-    }
-    
-    .char-incorrect {
-      color: var(--red);
-      background: rgba(255, 51, 51, 0.2);
-    }
-    
-    .char-pending {
-      color: var(--text-dim);
-    }
-    
-    .char-cursor {
-      color: var(--green);
-      border-left: 2px solid var(--green);
+    .char.current {
+      background-color: var(--green);
+      color: #000;
       animation: blink 1s infinite;
     }
-    
-    @keyframes blink {
-      0%, 100% { border-color: var(--green); }
-      50% { border-color: transparent; }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    #hidden-input {
+      position: absolute;
+      opacity: 0;
+      top: -1000px;
     }
-    
-    .interim {
-      color: var(--green-dim);
-      font-style: italic;
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
     }
-    
-    .placeholder {
-      color: var(--text-dim);
-      font-style: italic;
-    }
-    
-    .input-area {
-      width: 100%;
-      min-height: 120px;
-      padding: 1rem;
-      background: var(--bg);
-      border: 1px solid var(--bg-card-border);
+
+    button {
+      background: transparent;
+      border: 1px solid var(--green);
       color: var(--green);
+      padding: 10px 20px;
       font-family: inherit;
-      font-size: 1rem;
-      line-height: 1.6;
-      resize: none;
+      font-size: 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    button:hover { background: var(--green); color: #000; }
+    button.active { background: var(--green); color: #000; box-shadow: 0 0 15px var(--green); }
+    
+    .error-banner {
+      color: var(--bg);
+      background: var(--red);
+      padding: 10px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      display: none;
     }
     
-    .input-area:focus {
-      outline: none;
-      border-color: var(--green-dim);
-      box-shadow: 0 0 10px var(--green-glow);
-    }
-    
-    .input-area:disabled {
-      color: var(--text-dim);
-    }
-    
-    .input-area::placeholder {
-      color: var(--text-dim);
-    }
-    
-    .footer {
-      margin-top: 1rem;
-      font-size: 0.7rem;
-      color: var(--text-dim);
-    }
-    
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: var(--bg-card);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: var(--green-dim);
+    .mic-warning {
+      font-size: 12px;
+      margin-top: 10px;
+      color: #ffaa00;
+      border: 1px solid #ffaa00;
+      padding: 10px;
     }
   </style>
 </head>
 <body>
   <div id="root"></div>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback } = React;
 
-    function LectureTyper() {
-      const [isListening, setIsListening] = useState(false);
-      const [transcript, setTranscript] = useState('');
-      const [interimText, setInterimText] = useState('');
-      const [userInput, setUserInput] = useState('');
-      const [stats, setStats] = useState({ wpm: 0, accuracy: 100 });
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function App() {
+      const [listening, setListening] = useState(false);
+      const [fullText, setFullText] = useState(""); 
+      const [typedIndex, setTypedIndex] = useState(0); 
+      const [mistakes, setMistakes] = useState(new Set()); 
+      const [wpm, setWpm] = useState(0);
       const [startTime, setStartTime] = useState(null);
-      const [error, setError] = useState(null);
-      const [minConfidence, setMinConfidence] = useState(0.7);
+      const [browserError, setBrowserError] = useState("");
       
       const recognitionRef = useRef(null);
       const inputRef = useRef(null);
-      const transcriptEndRef = useRef(null);
-      const isListeningRef = useRef(false);
-      const lastPhrasesRef = useRef([]);
-      const pendingTextRef = useRef('');
-      const debounceTimerRef = useRef(null);
-
-      // Check if a phrase is too similar to recent phrases
-      const isDuplicate = (newText) => {
-        const normalized = newText.toLowerCase().trim();
-        if (normalized.length < 5) return false;
-        
-        for (const phrase of lastPhrasesRef.current) {
-          // Check for exact match
-          if (phrase === normalized) return true;
-          
-          // Check if one contains the other
-          if (phrase.includes(normalized) || normalized.includes(phrase)) {
-            // Only skip if very similar length (likely duplicate)
-            if (Math.abs(phrase.length - normalized.length) < 10) return true;
-          }
-          
-          // Check for high similarity (simple check)
-          const words1 = normalized.split(' ');
-          const words2 = phrase.split(' ');
-          const commonWords = words1.filter(w => words2.includes(w)).length;
-          const similarity = commonWords / Math.max(words1.length, words2.length);
-          if (similarity > 0.8 && words1.length > 3) return true;
-        }
-        return false;
-      };
-
-      // Add phrase to history
-      const addToHistory = (text) => {
-        const normalized = text.toLowerCase().trim();
-        if (normalized.length < 3) return;
-        
-        lastPhrasesRef.current.push(normalized);
-        // Keep last 10 phrases
-        if (lastPhrasesRef.current.length > 10) {
-          lastPhrasesRef.current.shift();
-        }
-      };
-
-      // Remove repeated words/phrases within text
-      const cleanRepeatedPhrases = (text) => {
-        const words = text.split(' ');
-        const result = [];
-        let i = 0;
-        
-        while (i < words.length) {
-          // Look for repeating sequences of 3-8 words
-          let foundRepeat = false;
-          for (let seqLen = 3; seqLen <= 8 && i + seqLen * 2 <= words.length; seqLen++) {
-            const seq1 = words.slice(i, i + seqLen).join(' ');
-            const seq2 = words.slice(i + seqLen, i + seqLen * 2).join(' ');
-            if (seq1 === seq2) {
-              result.push(...words.slice(i, i + seqLen));
-              i += seqLen * 2;
-              foundRepeat = true;
-              break;
-            }
-          }
-          if (!foundRepeat) {
-            result.push(words[i]);
-            i++;
-          }
-        }
-        
-        return result.join(' ');
-      };
+      const containerRef = useRef(null);
 
       useEffect(() => {
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-          setError('Speech recognition not supported. Use Chrome or Edge.');
+        if (!('webkitSpeechRecognition' in window)) {
+          setBrowserError("CRITICAL ERROR: Browser not supported. Use Chrome, Edge, or Brave.");
           return;
         }
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        
+        const recognition = new window.webkitSpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
 
         recognition.onresult = (event) => {
-          let newFinalText = '';
-          let currentInterim = '';
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const result = event.results[i];
-            const text = result[0].transcript;
-            const confidence = result[0].confidence;
-
-            if (result.isFinal) {
-              // Filter by confidence
-              if (confidence >= minConfidence) {
-                const cleaned = cleanRepeatedPhrases(text.trim());
-                if (!isDuplicate(cleaned) && cleaned.length > 0) {
-                  newFinalText += cleaned + ' ';
-                  addToHistory(cleaned);
-                }
-              }
-            } else {
-              currentInterim = text;
+          let incomingFinal = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              incomingFinal += event.results[i][0].transcript;
             }
           }
-
-          // Update interim immediately
-          setInterimText(currentInterim);
-
-          // Debounce final text updates
-          if (newFinalText) {
-            pendingTextRef.current += newFinalText;
-            
-            if (debounceTimerRef.current) {
-              clearTimeout(debounceTimerRef.current);
-            }
-            
-            debounceTimerRef.current = setTimeout(() => {
-              if (pendingTextRef.current) {
-                setTranscript(prev => {
-                  const combined = (prev + ' ' + pendingTextRef.current).trim();
-                  return cleanRepeatedPhrases(combined);
-                });
-                pendingTextRef.current = '';
-              }
-            }, 300);
+          if (incomingFinal) {
+            setFullText(prev => {
+              let spacer = (prev.length > 0 && !prev.endsWith(' ')) ? ' ' : '';
+              return prev + spacer + incomingFinal.trim();
+            });
           }
         };
 
-        recognition.onerror = (event) => {
-          if (event.error === 'no-speech') return;
-          setError(`Recognition error: ${event.error}`);
-          setIsListening(false);
-          isListeningRef.current = false;
+        recognition.onerror = (e) => {
+          if (e.error === 'not-allowed') {
+            setListening(false);
+            alert("Microphone access blocked. Check permissions or HTTPS.");
+          }
         };
 
         recognition.onend = () => {
-          if (isListeningRef.current) {
-            try {
-              recognition.start();
-            } catch (e) {}
+          if (listening) {
+            try { recognition.start(); } catch(e){}
           }
         };
 
         recognitionRef.current = recognition;
+      }, [listening]);
 
-        return () => {
-          recognition.stop();
-          if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-          }
-        };
-      }, [minConfidence]);
-
-      useEffect(() => {
-        transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, [transcript]);
-
-      const toggleListening = useCallback(() => {
-        if (!recognitionRef.current) return;
-
-        if (isListening) {
-          isListeningRef.current = false;
-          recognitionRef.current.stop();
-          setIsListening(false);
+      const toggleListen = () => {
+        if (browserError) return;
+        if (listening) {
+          recognitionRef.current?.stop();
+          setListening(false);
         } else {
-          setError(null);
-          isListeningRef.current = true;
-          lastPhrasesRef.current = [];
-          pendingTextRef.current = '';
-          recognitionRef.current.start();
-          setIsListening(true);
-          if (!startTime) setStartTime(Date.now());
-          inputRef.current?.focus();
+          try {
+            recognitionRef.current?.start();
+            setListening(true);
+            inputRef.current?.focus();
+          } catch(e) { console.error(e); }
         }
-      }, [isListening, startTime]);
+      };
 
-      const calculateStats = useCallback((input, target) => {
-        const compareLength = Math.min(input.length, target.length);
+      const handleKeyDown = (e) => {
+        // Prevent default spacebar scrolling
+        if (e.key === ' ' && e.target === inputRef.current) {
+            // No preventDefault needed for space in text input, 
+            // but good to keep focus logic clean.
+        }
+
+        if (!listening && fullText.length === 0) return;
+        if (!startTime) setStartTime(Date.now());
+
+        const targetChar = fullText[typedIndex];
+
+        if (e.key === 'Backspace') {
+          if (typedIndex > 0) {
+            setTypedIndex(prev => prev - 1);
+            setMistakes(prev => {
+              const newMistakes = new Set(prev);
+              newMistakes.delete(typedIndex - 1);
+              return newMistakes;
+            });
+          }
+          return;
+        }
+
+        if (e.key.length > 1) return;
+
+        if (e.key === targetChar) {
+          setTypedIndex(prev => prev + 1);
+        } else {
+          setMistakes(prev => new Set(prev).add(typedIndex));
+          setTypedIndex(prev => prev + 1);
+        }
         
-        let correct = 0;
-        for (let i = 0; i < compareLength; i++) {
-          if (input[i] === target[i]) correct++;
-        }
+        // Auto-scroll logic
+        setTimeout(() => {
+          const cursorEl = document.querySelector('.char.current');
+          if (cursorEl) cursorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 10);
+      };
 
-        const accuracy = compareLength > 0 ? Math.round((correct / compareLength) * 100) : 100;
-        const elapsedMinutes = startTime ? (Date.now() - startTime) / 60000 : 0;
-        const wordCount = input.trim().split(/\s+/).filter(w => w.length > 0).length;
-        const wpm = elapsedMinutes > 0 ? Math.round(wordCount / elapsedMinutes) : 0;
+      // WPM Timer
+      useEffect(() => {
+        if (!startTime || typedIndex === 0) return;
+        const interval = setInterval(() => {
+          const minutes = (Date.now() - startTime) / 60000;
+          const words = typedIndex / 5;
+          setWpm(Math.round(words / minutes));
+        }, 1000);
+        return () => clearInterval(interval);
+      }, [startTime, typedIndex]);
 
-        return { wpm, accuracy };
-      }, [startTime]);
-
-      const handleInput = useCallback((e) => {
-        const value = e.target.value;
-        setUserInput(value);
-        setStats(calculateStats(value, transcript));
-      }, [transcript, calculateStats]);
-
-      const reset = useCallback(() => {
-        isListeningRef.current = false;
-        recognitionRef.current?.stop();
-        setIsListening(false);
-        setTranscript('');
-        setInterimText('');
-        setUserInput('');
-        setStats({ wpm: 0, accuracy: 100 });
+      const clearAll = () => {
+        setFullText("");
+        setTypedIndex(0);
+        setMistakes(new Set());
+        setWpm(0);
         setStartTime(null);
-        setError(null);
-        lastPhrasesRef.current = [];
-        pendingTextRef.current = '';
-      }, []);
-
-      const renderTranscript = () => {
-        return (
-          <div className="transcript">
-            {transcript.split('').map((char, i) => {
-              let className = 'char-pending';
-              if (i < userInput.length) {
-                className = userInput[i] === char ? 'char-correct' : 'char-incorrect';
-              } else if (i === userInput.length) {
-                className = 'char-cursor';
-              }
-              return <span key={i} className={className}>{char}</span>;
-            })}
-            {interimText && <span className="interim"> {interimText}</span>}
-            <span ref={transcriptEndRef} />
-          </div>
-        );
+        inputRef.current?.focus();
       };
 
       return (
-        <div className="container">
-          <div className="header">
-            <h1>Lecture Typer</h1>
-            <p>Real-time transcription // Type along to practice</p>
-          </div>
-
-          {error && <div className="error">{error}</div>}
-
-          <div className="controls">
-            <button
-              onClick={toggleListening}
-              disabled={!!error && !isListening}
-              className={`btn ${isListening ? 'active' : ''}`}
-            >
-              {isListening ? '■ Stop' : '● Start'}
-            </button>
-            <button onClick={reset} className="btn">Reset</button>
-            <div className="confidence-control">
-              <label>Min confidence:</label>
-              <input
-                type="number"
-                min="0"
-                max="1"
-                step="0.1"
-                value={minConfidence}
-                onChange={(e) => setMinConfidence(parseFloat(e.target.value) || 0)}
-              />
+        <div className="pip-boy-frame">
+          <header>
+            <div>
+              <h1>LECTURE TYPER v2.1</h1>
+              <div className="status">OS: PIP-BOY 3000 // MEMORY: OK</div>
             </div>
-          </div>
+            <div style={{textAlign:'right'}}>
+              STATUS: {listening ? 'RECEIVING AUDIO...' : 'STANDBY'}
+            </div>
+          </header>
 
-          <div className="stats">
-            <div className="stat-card">
+          {browserError && <div className="error-banner" style={{display:'block'}}>{browserError}</div>}
+
+          <div className="stats-bar">
+            <div className="stat">
+              <div className="stat-val">{wpm}</div>
               <div className="stat-label">WPM</div>
-              <div className="stat-value">{stats.wpm}</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-label">Accuracy</div>
-              <div className="stat-value">{stats.accuracy}%</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">Chars</div>
-              <div className="stat-value">{userInput.length}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">Status</div>
-              <div className={`stat-value ${isListening ? 'live' : 'off'}`}>
-                {isListening ? 'LIVE' : 'OFF'}
+            <div className="stat">
+              <div className="stat-val">
+                {typedIndex > 0 
+                  ? Math.round(((typedIndex - mistakes.size) / typedIndex) * 100) 
+                  : 100}%
               </div>
+              <div className="stat-label">ACCURACY</div>
+            </div>
+            <div className="stat">
+              <div className="stat-val">{fullText.length - typedIndex}</div>
+              <div className="stat-label">BUFFER</div>
             </div>
           </div>
 
-          <div className="panel">
-            <div className="panel-header">// Transcript</div>
-            <div className="panel-body">
-              {(transcript || interimText) ? renderTranscript() : (
-                <span className="placeholder">
-                  {isListening ? 'Listening...' : 'Tap START to begin'}
+          <div 
+            className="typing-container" 
+            onClick={() => inputRef.current?.focus()}
+            ref={containerRef}
+          >
+            <div className="typing-content">
+              {fullText.split('').map((char, i) => {
+                let className = 'char';
+                if (i < typedIndex) {
+                  className += mistakes.has(i) ? ' incorrect' : ' correct';
+                } else if (i === typedIndex) {
+                  className += ' current';
+                } else {
+                  className += ' pending';
+                }
+                return <span key={i} className={className}>{char}</span>;
+              })}
+              {fullText.length === 0 && (
+                <span className="char pending" style={{fontStyle:'italic'}}>
+                  {listening ? "Waiting for audio input..." : "Press START to begin listening..."}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="panel">
-            <div className="panel-header">// Input</div>
-            <div className="panel-body" style={{padding: 0, minHeight: 'auto'}}>
-              <textarea
-                ref={inputRef}
-                value={userInput}
-                onChange={handleInput}
-                placeholder="Type here..."
-                className="input-area"
-                disabled={!transcript && !interimText}
-              />
-            </div>
+          <input 
+            id="hidden-input" 
+            ref={inputRef} 
+            type="text" 
+            autoFocus 
+            onKeyDown={handleKeyDown}
+            autoComplete="off"
+          />
+
+          <div className="mic-warning">
+            <strong>⚠ SETUP REQUIRED:</strong> To transcribe computer audio, you MUST install 
+            <strong> VB-Cable</strong> and route audio through it. 
+            <br/>If you just use your microphone, this app will not work well.
           </div>
 
-          <div className="footer">
-            System ready // Confidence filter active // Green = correct // Red = error
+          <div className="controls">
+            <button 
+              className={listening ? 'active' : ''} 
+              onClick={toggleListen}
+            >
+              {listening ? '■ STOP RECEIVER' : '▶ START RECEIVER'}
+            </button>
+            <button onClick={clearAll}>RESET DATA</button>
           </div>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<LectureTyper />);
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
   </script>
 </body>
 </html>
