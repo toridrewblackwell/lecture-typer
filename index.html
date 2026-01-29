@@ -76,6 +76,7 @@
       display: flex;
       gap: 0.75rem;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
     
     .btn {
@@ -111,6 +112,29 @@
     .btn.active:hover {
       background: var(--red-dim);
       box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
+    }
+    
+    .confidence-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--green-dim);
+    }
+    
+    .confidence-control input {
+      width: 80px;
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      color: var(--green);
+      padding: 0.4rem;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+    
+    .confidence-control input:focus {
+      outline: none;
+      border-color: var(--green-dim);
     }
     
     .stats {
@@ -255,7 +279,6 @@
       color: var(--text-dim);
     }
     
-    /* Scrollbar styling */
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -280,15 +303,85 @@
     function LectureTyper() {
       const [isListening, setIsListening] = useState(false);
       const [transcript, setTranscript] = useState('');
+      const [interimText, setInterimText] = useState('');
       const [userInput, setUserInput] = useState('');
       const [stats, setStats] = useState({ wpm: 0, accuracy: 100 });
       const [startTime, setStartTime] = useState(null);
       const [error, setError] = useState(null);
+      const [minConfidence, setMinConfidence] = useState(0.7);
       
       const recognitionRef = useRef(null);
       const inputRef = useRef(null);
       const transcriptEndRef = useRef(null);
       const isListeningRef = useRef(false);
+      const lastPhrasesRef = useRef([]);
+      const pendingTextRef = useRef('');
+      const debounceTimerRef = useRef(null);
+
+      // Check if a phrase is too similar to recent phrases
+      const isDuplicate = (newText) => {
+        const normalized = newText.toLowerCase().trim();
+        if (normalized.length < 5) return false;
+        
+        for (const phrase of lastPhrasesRef.current) {
+          // Check for exact match
+          if (phrase === normalized) return true;
+          
+          // Check if one contains the other
+          if (phrase.includes(normalized) || normalized.includes(phrase)) {
+            // Only skip if very similar length (likely duplicate)
+            if (Math.abs(phrase.length - normalized.length) < 10) return true;
+          }
+          
+          // Check for high similarity (simple check)
+          const words1 = normalized.split(' ');
+          const words2 = phrase.split(' ');
+          const commonWords = words1.filter(w => words2.includes(w)).length;
+          const similarity = commonWords / Math.max(words1.length, words2.length);
+          if (similarity > 0.8 && words1.length > 3) return true;
+        }
+        return false;
+      };
+
+      // Add phrase to history
+      const addToHistory = (text) => {
+        const normalized = text.toLowerCase().trim();
+        if (normalized.length < 3) return;
+        
+        lastPhrasesRef.current.push(normalized);
+        // Keep last 10 phrases
+        if (lastPhrasesRef.current.length > 10) {
+          lastPhrasesRef.current.shift();
+        }
+      };
+
+      // Remove repeated words/phrases within text
+      const cleanRepeatedPhrases = (text) => {
+        const words = text.split(' ');
+        const result = [];
+        let i = 0;
+        
+        while (i < words.length) {
+          // Look for repeating sequences of 3-8 words
+          let foundRepeat = false;
+          for (let seqLen = 3; seqLen <= 8 && i + seqLen * 2 <= words.length; seqLen++) {
+            const seq1 = words.slice(i, i + seqLen).join(' ');
+            const seq2 = words.slice(i + seqLen, i + seqLen * 2).join(' ');
+            if (seq1 === seq2) {
+              result.push(...words.slice(i, i + seqLen));
+              i += seqLen * 2;
+              foundRepeat = true;
+              break;
+            }
+          }
+          if (!foundRepeat) {
+            result.push(words[i]);
+            i++;
+          }
+        }
+        
+        return result.join(' ');
+      };
 
       useEffect(() => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -302,30 +395,52 @@
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
 
         recognition.onresult = (event) => {
-          let finalTranscript = '';
-          let interimTranscript = '';
+          let newFinalText = '';
+          let currentInterim = '';
 
-          for (let i = 0; i < event.results.length; i++) {
+          for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i];
+            const text = result[0].transcript;
+            const confidence = result[0].confidence;
+
             if (result.isFinal) {
-              finalTranscript += result[0].transcript + ' ';
+              // Filter by confidence
+              if (confidence >= minConfidence) {
+                const cleaned = cleanRepeatedPhrases(text.trim());
+                if (!isDuplicate(cleaned) && cleaned.length > 0) {
+                  newFinalText += cleaned + ' ';
+                  addToHistory(cleaned);
+                }
+              }
             } else {
-              interimTranscript += result[0].transcript;
+              currentInterim = text;
             }
           }
 
-          setTranscript(prev => {
-            const base = prev.replace(/\[.*?\]$/, '').trim();
-            const newText = finalTranscript.trim();
-            const interim = interimTranscript ? ` [${interimTranscript}]` : '';
+          // Update interim immediately
+          setInterimText(currentInterim);
+
+          // Debounce final text updates
+          if (newFinalText) {
+            pendingTextRef.current += newFinalText;
             
-            if (newText && !base.endsWith(newText)) {
-              return (base + ' ' + newText + interim).trim();
+            if (debounceTimerRef.current) {
+              clearTimeout(debounceTimerRef.current);
             }
-            return base + interim;
-          });
+            
+            debounceTimerRef.current = setTimeout(() => {
+              if (pendingTextRef.current) {
+                setTranscript(prev => {
+                  const combined = (prev + ' ' + pendingTextRef.current).trim();
+                  return cleanRepeatedPhrases(combined);
+                });
+                pendingTextRef.current = '';
+              }
+            }, 300);
+          }
         };
 
         recognition.onerror = (event) => {
@@ -345,8 +460,13 @@
 
         recognitionRef.current = recognition;
 
-        return () => recognition.stop();
-      }, []);
+        return () => {
+          recognition.stop();
+          if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+          }
+        };
+      }, [minConfidence]);
 
       useEffect(() => {
         transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -362,6 +482,8 @@
         } else {
           setError(null);
           isListeningRef.current = true;
+          lastPhrasesRef.current = [];
+          pendingTextRef.current = '';
           recognitionRef.current.start();
           setIsListening(true);
           if (!startTime) setStartTime(Date.now());
@@ -370,12 +492,11 @@
       }, [isListening, startTime]);
 
       const calculateStats = useCallback((input, target) => {
-        const cleanTarget = target.replace(/\[.*?\]/g, '').trim();
-        const compareLength = Math.min(input.length, cleanTarget.length);
+        const compareLength = Math.min(input.length, target.length);
         
         let correct = 0;
         for (let i = 0; i < compareLength; i++) {
-          if (input[i] === cleanTarget[i]) correct++;
+          if (input[i] === target[i]) correct++;
         }
 
         const accuracy = compareLength > 0 ? Math.round((correct / compareLength) * 100) : 100;
@@ -397,20 +518,19 @@
         recognitionRef.current?.stop();
         setIsListening(false);
         setTranscript('');
+        setInterimText('');
         setUserInput('');
         setStats({ wpm: 0, accuracy: 100 });
         setStartTime(null);
         setError(null);
+        lastPhrasesRef.current = [];
+        pendingTextRef.current = '';
       }, []);
 
       const renderTranscript = () => {
-        const cleanTranscript = transcript.replace(/\[.*?\]/g, '').trim();
-        const interimMatch = transcript.match(/\[(.*?)\]$/);
-        const interim = interimMatch ? interimMatch[1] : '';
-
         return (
           <div className="transcript">
-            {cleanTranscript.split('').map((char, i) => {
+            {transcript.split('').map((char, i) => {
               let className = 'char-pending';
               if (i < userInput.length) {
                 className = userInput[i] === char ? 'char-correct' : 'char-incorrect';
@@ -419,7 +539,7 @@
               }
               return <span key={i} className={className}>{char}</span>;
             })}
-            {interim && <span className="interim"> {interim}</span>}
+            {interimText && <span className="interim"> {interimText}</span>}
             <span ref={transcriptEndRef} />
           </div>
         );
@@ -443,6 +563,17 @@
               {isListening ? '■ Stop' : '● Start'}
             </button>
             <button onClick={reset} className="btn">Reset</button>
+            <div className="confidence-control">
+              <label>Min confidence:</label>
+              <input
+                type="number"
+                min="0"
+                max="1"
+                step="0.1"
+                value={minConfidence}
+                onChange={(e) => setMinConfidence(parseFloat(e.target.value) || 0)}
+              />
+            </div>
           </div>
 
           <div className="stats">
@@ -469,7 +600,7 @@
           <div className="panel">
             <div className="panel-header">// Transcript</div>
             <div className="panel-body">
-              {transcript ? renderTranscript() : (
+              {(transcript || interimText) ? renderTranscript() : (
                 <span className="placeholder">
                   {isListening ? 'Listening...' : 'Tap START to begin'}
                 </span>
@@ -486,13 +617,13 @@
                 onChange={handleInput}
                 placeholder="Type here..."
                 className="input-area"
-                disabled={!transcript}
+                disabled={!transcript && !interimText}
               />
             </div>
           </div>
 
           <div className="footer">
-            System ready // Chrome recommended // Green = correct // Red = error
+            System ready // Confidence filter active // Green = correct // Red = error
           </div>
         </div>
       );
