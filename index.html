@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Lecture Typer</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='15' fill='%230a0a0a'/%3E%3Crect x='5' y='5' width='90' height='90' rx='12' fill='none' stroke='%2300ff88' stroke-width='2'/%3E%3Cpath d='M30 70 L30 40 Q30 30 40 30 L60 30 Q70 30 70 40 L70 70' fill='none' stroke='%2300ff88' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='55' r='8' fill='%2300ff88'/%3E%3Crect x='25' y='75' width='50' height='6' rx='3' fill='%2300ff88'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='15' fill='%230a0a0a'/%3E%3Crect x='5' y='5' width='90' height='90' rx='12' fill='none' stroke='%2300ff88' stroke-width='2'/%3E%3Cpath d='M30 70 L30 40 Q30 30 40 30 L60 30 Q70 30 70 40 L70 70' fill='none' stroke='%2300ff88' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='55' r='8' fill='%2300ff88'/%3E%3Crect x='25' y='75' width='50' height='6' rx='3' fill='%2300ff88'/%3E%3C/svg%3E">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --green: #00ff88;
+      --green-dim: #00aa5c;
+      --green-glow: rgba(0, 255, 136, 0.3);
+      --red: #ff3333;
+      --red-dim: #aa2222;
+      --bg: #0a0a0a;
+      --bg-card: #111111;
+      --bg-card-border: #1a1a1a;
+      --text-dim: #446655;
+    }
+    
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg);
+      color: var(--green);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--green-dim);
+    }
+    
+    .header h1 {
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      text-shadow: 0 0 10px var(--green-glow);
+      margin-bottom: 0.25rem;
+    }
+    
+    .header p {
+      font-size: 0.8rem;
+      color: var(--green-dim);
+    }
+    
+    .error {
+      background: rgba(255, 51, 51, 0.1);
+      border: 1px solid var(--red);
+      color: var(--red);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .btn {
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 0.6rem 1.5rem;
+      border: 2px solid var(--green);
+      background: transparent;
+      color: var(--green);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--green);
+      color: var(--bg);
+      box-shadow: 0 0 20px var(--green-glow);
+    }
+    
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .btn.active {
+      background: var(--red);
+      border-color: var(--red);
+      color: white;
+    }
+    
+    .btn.active:hover {
+      background: var(--red-dim);
+      box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 600px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      padding: 0.75rem 1rem;
+    }
+    
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--green-dim);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+      font-size: 1.75rem;
+      text-shadow: 0 0 10px var(--green-glow);
+    }
+    
+    .stat-value.live {
+      color: var(--green);
+      animation: pulse 1.5s infinite;
+    }
+    
+    .stat-value.off {
+      color: var(--text-dim);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      margin-bottom: 1rem;
+    }
+    
+    .panel-header {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--bg-card-border);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--green-dim);
+    }
+    
+    .panel-body {
+      padding: 1rem;
+      min-height: 120px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .transcript {
+      font-size: 1rem;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    
+    .char-correct {
+      color: var(--green);
+      text-shadow: 0 0 5px var(--green-glow);
+    }
+    
+    .char-incorrect {
+      color: var(--red);
+      background: rgba(255, 51, 51, 0.2);
+    }
+    
+    .char-pending {
+      color: var(--text-dim);
+    }
+    
+    .char-cursor {
+      color: var(--green);
+      border-left: 2px solid var(--green);
+      animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { border-color: var(--green); }
+      50% { border-color: transparent; }
+    }
+    
+    .interim {
+      color: var(--green-dim);
+      font-style: italic;
+    }
+    
+    .placeholder {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    
+    .input-area {
+      width: 100%;
+      min-height: 120px;
+      padding: 1rem;
+      background: var(--bg);
+      border: 1px solid var(--bg-card-border);
+      color: var(--green);
+      font-family: inherit;
+      font-size: 1rem;
+      line-height: 1.6;
+      resize: none;
+    }
+    
+    .input-area:focus {
+      outline: none;
+      border-color: var(--green-dim);
+      box-shadow: 0 0 10px var(--green-glow);
+    }
+    
+    .input-area:disabled {
+      color: var(--text-dim);
+    }
+    
+    .input-area::placeholder {
+      color: var(--text-dim);
+    }
+    
+    .footer {
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-card);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--green-dim);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    function LectureTyper() {
+      const [isListening, setIsListening] = useState(false);
+      const [transcript, setTranscript] = useState('');
+      const [userInput, setUserInput] = useState('');
+      const [stats, setStats] = useState({ wpm: 0, accuracy: 100 });
+      const [startTime, setStartTime] = useState(null);
+      const [error, setError] = useState(null);
+      
+      const recognitionRef = useRef(null);
+      const inputRef = useRef(null);
+      const transcriptEndRef = useRef(null);
+      const isListeningRef = useRef(false);
+
+      useEffect(() => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+          setError('Speech recognition not supported. Use Chrome or Edge.');
+          return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+          let finalTranscript = '';
+          let interimTranscript = '';
+
+          for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript + ' ';
+            } else {
+              interimTranscript += result[0].transcript;
+            }
+          }
+
+          setTranscript(prev => {
+            const base = prev.replace(/\[.*?\]$/, '').trim();
+            const newText = finalTranscript.trim();
+            const interim = interimTranscript ? ` [${interimTranscript}]` : '';
+            
+            if (newText && !base.endsWith(newText)) {
+              return (base + ' ' + newText + interim).trim();
+            }
+            return base + interim;
+          });
+        };
+
+        recognition.onerror = (event) => {
+          if (event.error === 'no-speech') return;
+          setError(`Recognition error: ${event.error}`);
+          setIsListening(false);
+          isListeningRef.current = false;
+        };
+
+        recognition.onend = () => {
+          if (isListeningRef.current) {
+            try {
+              recognition.start();
+            } catch (e) {}
+          }
+        };
+
+        recognitionRef.current = recognition;
+
+        return () => recognition.stop();
+      }, []);
+
+      useEffect(() => {
+        transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [transcript]);
+
+      const toggleListening = useCallback(() => {
+        if (!recognitionRef.current) return;
+
+        if (isListening) {
+          isListeningRef.current = false;
+          recognitionRef.current.stop();
+          setIsListening(false);
+        } else {
+          setError(null);
+          isListeningRef.current = true;
+          recognitionRef.current.start();
+          setIsListening(true);
+          if (!startTime) setStartTime(Date.now());
+          inputRef.current?.focus();
+        }
+      }, [isListening, startTime]);
+
+      const calculateStats = useCallback((input, target) => {
+        const cleanTarget = target.replace(/\[.*?\]/g, '').trim();
+        const compareLength = Math.min(input.length, cleanTarget.length);
+        
+        let correct = 0;
+        for (let i = 0; i < compareLength; i++) {
+          if (input[i] === cleanTarget[i]) correct++;
+        }
+
+        const accuracy = compareLength > 0 ? Math.round((correct / compareLength) * 100) : 100;
+        const elapsedMinutes = startTime ? (Date.now() - startTime) / 60000 : 0;
+        const wordCount = input.trim().split(/\s+/).filter(w => w.length > 0).length;
+        const wpm = elapsedMinutes > 0 ? Math.round(wordCount / elapsedMinutes) : 0;
+
+        return { wpm, accuracy };
+      }, [startTime]);
+
+      const handleInput = useCallback((e) => {
+        const value = e.target.value;
+        setUserInput(value);
+        setStats(calculateStats(value, transcript));
+      }, [transcript, calculateStats]);
+
+      const reset = useCallback(() => {
+        isListeningRef.current = false;
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        setTranscript('');
+        setUserInput('');
+        setStats({ wpm: 0, accuracy: 100 });
+        setStartTime(null);
+        setError(null);
+      }, []);
+
+      const renderTranscript = () => {
+        const cleanTranscript = transcript.replace(/\[.*?\]/g, '').trim();
+        const interimMatch = transcript.match(/\[(.*?)\]$/);
+        const interim = interimMatch ? interimMatch[1] : '';
+
+        return (
+          <div className="transcript">
+            {cleanTranscript.split('').map((char, i) => {
+              let className = 'char-pending';
+              if (i < userInput.length) {
+                className = userInput[i] === char ? 'char-correct' : 'char-incorrect';
+              } else if (i === userInput.length) {
+                className = 'char-cursor';
+              }
+              return <span key={i} className={className}>{char}</span>;
+            })}
+            {interim && <span className="interim"> {interim}</span>}
+            <span ref={transcriptEndRef} />
+          </div>
+        );
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>Lecture Typer</h1>
+            <p>Real-time transcription // Type along to practice</p>
+          </div>
+
+          {error && <div className="error">{error}</div>}
+
+          <div className="controls">
+            <button
+              onClick={toggleListening}
+              disabled={!!error && !isListening}
+              className={`btn ${isListening ? 'active' : ''}`}
+            >
+              {isListening ? '■ Stop' : '● Start'}
+            </button>
+            <button onClick={reset} className="btn">Reset</button>
+          </div>
+
+          <div className="stats">
+            <div className="stat-card">
+              <div className="stat-label">WPM</div>
+              <div className="stat-value">{stats.wpm}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Accuracy</div>
+              <div className="stat-value">{stats.accuracy}%</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Chars</div>
+              <div className="stat-value">{userInput.length}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Status</div>
+              <div className={`stat-value ${isListening ? 'live' : 'off'}`}>
+                {isListening ? 'LIVE' : 'OFF'}
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">// Transcript</div>
+            <div className="panel-body">
+              {transcript ? renderTranscript() : (
+                <span className="placeholder">
+                  {isListening ? 'Listening...' : 'Tap START to begin'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">// Input</div>
+            <div className="panel-body" style={{padding: 0, minHeight: 'auto'}}>
+              <textarea
+                ref={inputRef}
+                value={userInput}
+                onChange={handleInput}
+                placeholder="Type here..."
+                className="input-area"
+                disabled={!transcript}
+              />
+            </div>
+          </div>
+
+          <div className="footer">
+            System ready // Chrome recommended // Green = correct // Red = error
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<LectureTyper />);
+  </script>
+</body>
+</html>
